@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tape %}
+{% block title %}Create account · Intrusion Detection{% endblock %}
+{% block body %}
+<div class="auth">
+  <section class="auth-art">
+    <h1>Create your account.</h1>
+    <p>Each account keeps its own scans and history.</p>
+    {{ tape({'normal': 62, 'DoS': 22, 'Probe': 9, 'R2L': 5, 'U2R': 2}) }}
+  </section>
+  <section class="auth-form">
+    <div class="box">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in msgs %}<div class="flash {{ cat }}" role="alert">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+      <h2>Create account</h2>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required minlength="3" maxlength="30">
+        <label for="password">Password (8 characters or more)</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8">
+        <label for="confirm">Confirm password</label>
+        <input id="confirm" name="confirm" type="password" autocomplete="new-password" required minlength="8">
+        <button class="btn" type="submit">Create account</button>
+      </form>
+      <p class="muted small" style="margin-top:1.2rem">Already registered? <a href="{{ url_for('login') }}">Sign in</a></p>
+    </div>
+  </section>
+</div>
+{% endblock %}

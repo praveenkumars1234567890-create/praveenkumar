@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Analyse traffic · Intrusion Detection{% endblock %}
+{% block content %}
+<div class="head"><h1>Analyse traffic</h1></div>
+{% if not trained %}
+<div class="flash error">No trained model found. Run <b>python train_model.py</b> in the project folder, then restart the app.</div>
+{% endif %}
+<section class="panel">
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="drop">
+      <label for="dataset" style="margin:0">Choose a CSV file of network records</label>
+      <input id="dataset" type="file" name="dataset" accept=".csv,.txt" required>
+      <p class="muted small">NSL-KDD format with 41 feature columns. A header row and a label column are optional. Maximum 50 MB.</p>
+    </div>
+    <p style="margin-top:1.2rem"><button class="btn" type="submit">Classify records</button></p>
+  </form>
+</section>
+<section class="panel">
+  <h2>What the file should contain</h2>
+  <p>Each row is one connection record with the standard NSL-KDD columns, starting with
+    <i>duration, protocol_type, service, flag, src_bytes, dst_bytes</i> and ending with <i>dst_host_srv_rerror_rate</i>.</p>
+  <p>If the file includes a <i>label</i> column, the results page also shows how often the model agreed with it.
+    Try <b>data/sample_upload_labeled.csv</b> or <b>data/sample_upload_unlabeled.csv</b> from the project folder.</p>
+</section>
+{% endblock %}

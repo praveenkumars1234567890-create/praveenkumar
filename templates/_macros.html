@@ -1,0 +1,15 @@
+{% macro tape(counts) %}
+{% set total = counts.values() | sum %}
+{% if total %}
+<div class="tape" role="img" aria-label="Share of each traffic class">
+  {% for c in CLASSES if counts.get(c, 0) > 0 %}
+  <span class="seg c-{{ c }}" style="flex:{{ counts[c] }}" title="{{ c }}: {{ counts[c] }}"></span>
+  {% endfor %}
+</div>
+<div class="legend">
+  {% for c in CLASSES %}<span><i class="c-{{ c }}"></i>{{ c }} <b>{{ '{:,}'.format(counts.get(c, 0)) }}</b></span>{% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro tag(c) %}<span class="tag c-{{ c }}">{{ c }}</span>{% endmacro %}

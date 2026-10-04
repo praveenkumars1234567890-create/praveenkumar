@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tape %}
+{% block title %}Dashboard · Intrusion Detection{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Dashboard</h1>
+  <a class="btn" href="{{ url_for('predict') }}">Analyse traffic</a>
+</div>
+
+{% if not trained %}
+<div class="flash error">The model has not been trained yet. Run <b>python train_model.py</b> in the project folder, then restart the app.</div>
+{% endif %}
+
+<div class="figures">
+  <div class="fig"><b>{{ '{:,}'.format(stats.scans) }}</b><span>scans run</span></div>
+  <div class="fig"><b>{{ '{:,}'.format(stats.records) }}</b><span>records analysed</span></div>
+  <div class="fig"><b>{{ '{:,}'.format(stats.attacks) }}</b><span>attacks found</span></div>
+  <div class="fig"><b>{{ '%.1f' % rate }}%</b><span>of records were attacks</span></div>
+</div>
+
+<section class="panel">
+  <h2>Latest scan</h2>
+  {% if latest %}
+    <p class="muted small">{{ latest.filename }} · {{ latest.created_at }} · {{ '{:,}'.format(latest.total) }} records.
+      <a href="{{ url_for('results', det_id=latest.id) }}">Open results</a></p>
+    {{ tape(latest_counts) }}
+  {% else %}
+    <p class="empty">No scans yet. <a href="{{ url_for('predict') }}">Upload a traffic file</a> to see its breakdown here.</p>
+  {% endif %}
+</section>
+
+{% if latest %}
+<div class="cols">
+  <section class="panel">
+    <h2>Recent scans</h2>
+    <div class="chartbox"><canvas data-kind="scans" data-chart='{{ chart.scans | tojson | forceescape }}'></canvas></div>
+  </section>
+  <section class="panel">
+    <h2>All traffic by class</h2>
+    <div class="chartbox"><canvas data-kind="classes" data-chart='{{ chart.totals | tojson | forceescape }}'></canvas></div>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Recent detections</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>File</th><th>When</th><th class="num">Records</th><th class="num">Attacks</th><th></th></tr></thead>
+    <tbody>
+    {% for r in recent %}
+      <tr><td>{{ r.filename }}</td><td>{{ r.created_at }}</td><td class="num">{{ '{:,}'.format(r.total) }}</td>
+          <td class="num">{{ '{:,}'.format(r.attack_count) }}</td>
+          <td><a href="{{ url_for('results', det_id=r.id) }}">View</a></td></tr>
+    {% endfor %}
+    </tbody></table></div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Model performance · Intrusion Detection{% endblock %}
+{% block content %}
+<div class="head"><h1>Model performance</h1></div>
+{% if not m %}
+<div class="flash error">No metrics found. Run <b>python train_model.py</b> to train the model and record its test results.</div>
+{% else %}
+<p class="muted">Measured on {{ '{:,}'.format(m.samples.test) }} held-out records from {{ m.trained_on }}.</p>
+<div class="figures">
+  <div class="fig"><b>{{ '%.2f' % (m.accuracy * 100) }}%</b><span>accuracy</span></div>
+  <div class="fig"><b>{{ '%.2f' % (m.precision * 100) }}%</b><span>precision (weighted)</span></div>
+  <div class="fig"><b>{{ '%.2f' % (m.recall * 100) }}%</b><span>recall (weighted)</span></div>
+  <div class="fig"><b>{{ '%.2f' % (m.f1 * 100) }}%</b><span>F1-score (weighted)</span></div>
+</div>
+
+<section class="panel">
+  <h2>Per-class results</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1-score</th><th class="num">Test records</th></tr></thead>
+    <tbody>
+    {% for c in m.classes %}{% set p = m.per_class[c] %}
+      <tr><td><span class="dot c-{{ c }}"></span>{{ c }}</td><td class="num">{{ '%.3f' % p.precision }}</td><td class="num">{{ '%.3f' % p.recall }}</td>
+          <td class="num">{{ '%.3f' % p['f1-score'] }}</td><td class="num">{{ p.support | int }}</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+</section>
+
+<div class="cols">
+  <section class="panel">
+    <h2>Confusion matrix</h2>
+    <p class="muted small">Rows are the true class, columns are what the model predicted.</p>
+    <div class="tablewrap"><table class="cm">
+      <thead><tr><th></th>{% for c in m.classes %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for row in m.confusion_matrix %}{% set i = loop.index0 %}
+        <tr><th>{{ m.classes[i] }}</th>
+        {% for v in row %}{% set rs = row | sum %}
+          <td class="{{ 'hit' if i == loop.index0 }}" style="background:rgba(14,79,99,{{ ((v / rs) * 0.55 if rs else 0) | round(2) }});color:{{ '#fff' if rs and v / rs > 0.5 else 'inherit' }}">{{ v }}</td>
+        {% endfor %}</tr>
+      {% endfor %}
+      </tbody></table></div>
+  </section>
+  <section class="panel">
+    <h2>Training history</h2>
+    <div class="chartbox"><canvas data-kind="history" data-chart='{{ m.history | tojson | forceescape }}'></canvas></div>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

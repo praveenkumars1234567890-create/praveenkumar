@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tape, tag %}
+{% block title %}Results · Intrusion Detection{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Results</h1><p class="muted">{{ det.filename }} · {{ det.created_at }}</p></div>
+  <a class="btn line" href="{{ url_for('download', det_id=det.id) }}">Download CSV</a>
+</div>
+
+<div class="figures">
+  <div class="fig"><b>{{ '{:,}'.format(det.total) }}</b><span>records analysed</span></div>
+  <div class="fig"><b>{{ '{:,}'.format(det.normal_count) }}</b><span>normal</span></div>
+  <div class="fig"><b>{{ '{:,}'.format(det.attack_count) }}</b><span>attacks</span></div>
+  {% if det.accuracy is not none %}<div class="fig"><b>{{ '%.1f' % (det.accuracy * 100) }}%</b><span>agreed with the file's labels</span></div>{% endif %}
+</div>
+
+<div class="cols">
+  <section class="panel"><h2>Traffic breakdown</h2>{{ tape(counts) }}</section>
+  <section class="panel"><div class="chartbox"><canvas data-kind="classes" data-chart='{{ counts | tojson | forceescape }}'></canvas></div></section>
+</div>
+
+<section class="panel">
+  <h2>Records</h2>
+  <div class="filters">
+    <a href="{{ url_for('results', det_id=det.id, show='attacks') }}" class="{{ 'on' if show == 'attacks' }}">Attacks only</a>
+    <a href="{{ url_for('results', det_id=det.id, show='all') }}" class="{{ 'on' if show == 'all' }}">All records</a>
+    {% for c in CLASSES %}<a href="{{ url_for('results', det_id=det.id, show=c) }}" class="{{ 'on' if show == c }}">{{ c }}</a>{% endfor %}
+  </div>
+  {% if rows %}
+  <div class="tablewrap"><table>
+    <thead><tr><th class="num">Row</th><th>Protocol</th><th>Service</th><th class="num">Source bytes</th>
+      {% if det.accuracy is not none %}<th>Label in file</th>{% endif %}<th>Predicted</th><th class="num">Confidence</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr><td class="num">{{ r.row_no }}</td><td>{{ r.protocol }}</td><td>{{ r.service }}</td><td class="num">{{ '{:,.0f}'.format(r.src_bytes) }}</td>
+        {% if det.accuracy is not none %}<td>{{ r.actual or '–' }}</td>{% endif %}
+        <td>{{ tag(r.predicted) }}</td><td class="num">{{ '%.1f' % (r.confidence * 100) }}%</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+  <div class="pager">
+    {% if page > 1 %}<a href="{{ url_for('results', det_id=det.id, show=show, page=page-1) }}">Previous</a>{% endif %}
+    <span class="muted">Page {{ page }} of {{ pages }} · {{ '{:,}'.format(total_rows) }} records</span>
+    {% if page < pages %}<a href="{{ url_for('results', det_id=det.id, show=show, page=page+1) }}">Next</a>{% endif %}
+  </div>
+  {% if truncated %}<p class="muted small">Only the first 20,000 records are stored for browsing. The counts above cover the whole file.</p>{% endif %}
+  {% else %}
+  <p class="empty">No records match this filter.</p>
+  {% endif %}
+</section>
+{% endblock %}
